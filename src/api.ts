@@ -1,13 +1,3 @@
-interface Restaurant {
-  id: string;
-  name: string;
-  image: string;
-  description: string;
-  address: string;
-  score: number;
-  ratings: number;
-}
-
 const restaurants: Restaurant[] = [
   {
     id: "1",
@@ -123,15 +113,49 @@ const restaurants: Restaurant[] = [
 ];
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const url =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQbRBbc48iiBfa8T17nRr4YduTm82WaIsSL8sCq4IRRhhNJHNnVVw42yXtrcdnLqnQiwjUeWTqKZJO1/pub?gid=0&single=true&output=csv";
 
 const api = {
   list: async (): Promise<Restaurant[]> => {
-    await sleep(750);
+    const [, ...data] = await fetch(url)
+      .then((res) => res.text())
+      .then((text) => text.split("\n"));
+
+    const restaurants: Restaurant[] = data.map((row) => {
+      const [id, name, description, address, score, ratings, image] = row.split(",");
+
+      return {
+        id,
+        name,
+        description,
+        address,
+        score: Number(score),
+        ratings: Number(ratings),
+        image,
+      };
+    });
 
     return restaurants;
   },
   fetch: async (id: Restaurant["id"]): Promise<Restaurant> => {
-    await sleep(750);
+    const [, ...data] = await fetch(url)
+      .then((res) => res.text())
+      .then((text) => text.split("\n"));
+
+    const restaurants: Restaurant[] = data.map((row) => {
+      const [id, name, description, address, score, ratings, image] = row.split(",");
+
+      return {
+        id,
+        name,
+        description,
+        address,
+        score: Number(score),
+        ratings: Number(ratings),
+        image,
+      };
+    });
 
     const restaurant = restaurants.find((restaurant) => restaurant.id === id);
 
@@ -140,6 +164,20 @@ const api = {
     }
 
     return restaurant;
+  },
+  search: async (query: string | undefined): Promise<Restaurant[]> => {
+    // Obtenemos los restaurantes
+    if (!query) return restaurants;
+
+    const results = await api.list().then((restaurants) =>
+      // Los filtramos por nombre
+      restaurants.filter((restaurant) =>
+        restaurant.name.toLowerCase().includes(query.toLowerCase()),
+      ),
+    );
+
+    // Los retornamos
+    return results;
   },
 };
 
